@@ -1,0 +1,134 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+
+
+{% block title %}
+Buy Now
+{% endblock title %}
+
+
+{% block main-content %}
+<div class="container">
+    {% if message %}
+    {% for msg in message %}
+    <div class="alert alert-danger" role="alert">
+        {{ msg }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    <div class="row mt-5">
+        <div class="col-sm-6">
+            <h4>Order Summary</h4>
+            <hr>
+            <div class="card ">
+                <div class="card-body">
+                    {% for item in cart_items %}
+                    <div class="d-flex my-5">
+                        <div class="text-center mx-3 align-self-center">
+                            <img src="{{ item.product.product_image.url }}" alt=""
+                                class="img-fluid img-thumbnail shadow-sm " height="80" width="80">
+                        </div>
+                        <div class="mx-3">
+                            <div>
+                                <h5>Product : {{ item.product.title }}</h5>
+                                <div>
+                                    <label for="quantity">Quantity :</label>
+                                    <span id="quantity" class="px-2">{{ item.quantity }}</span>
+                                    <p class="mb-0"><span><strong>Rs.{{ item.product.discounted_price }}</strong></span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="text-muted ">
+                    {% endfor %}
+                </div>
+            </div>
+            <p class="fw-bold my-3 ">Total Cost + Rs. 40 = {{ totalamount }}</p>
+            <small>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Exercitationem illum quidem iste
+                consequuntur aliquid? Nam sed dolorem, eaque officiis fuga repudiandae ipsam omnis quaerat porro iusto
+                expedita doloribus, vel quam.</small>
+
+        </div>
+        <div class="col-sm-4 offset-sm-1 ">
+            {% if add %}
+            <h4>Select Shoppping Address</h4>
+            <hr>
+            <form id="myform" method="post">
+                {% csrf_token %}
+                {% for ad in add %}
+                <div class="card">
+                    <div class="card-body ">
+                        <h5>{{ ad.name }}</h5>
+                        <p>mobile : {{ad.mobile}}</p>
+                        <p>{{ad.locality}} , {{ad.city}} , {{ad.state}} - {{ad.zipcode}}</p>
+                    </div>
+                </div>
+                <div class="form-check mt-2 mb-5 ">
+                    <input type="radio" name="custid" id="custadd{{forloop.counter}}" class="form-check-input"
+                        value="{{ad.id}}" checked>
+                    <label for="custadd{{forloop.coonter}}" class="form-check-label fw-bold ">Address : {{forloop.counter}}</label>
+                </div>
+                {% endfor %}
+                <div class="form-check mb-3 ">
+                    <label for="totamount" class="form-label ">Total Ammount</label>
+                    <input type="number" class="form-control " name="totalamount" value="{{totalamount}}" readonly>
+                </div>
+                <div class="text-end ">
+                    <button type="submit" class="btn btn-warning mt-3 px-5 fw-bold">Continue</button>
+                    <button id="rzp-button1" type="submit" class="btn btn-warning mt-3 px-5 fw-bold">Payment</button>
+                </div>
+            </form>
+            {% else %}
+            <h1 class="text-center mb-5 ">No Address Add!!Please Add Address</h1>
+            <div class="d-flex justify-content-center align-items-center">
+                <a href="{% url 'profile' %}" class="btn btn-primary w-50 mr-3">Address</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock main-content %}
+
+
+{% block payment-gateway %}
+
+<script>
+var options = {
+    "key": "rzp_test_S8vKZb4vMJBSmZ", // Enter the Key ID generated from the Dashboard
+    "amount": "{{razoramount}}", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+    "currency": "INR",
+    "name": "Zeel Product",
+    "description": "Purchase Product",
+    "order_id": "{{order_id}}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+    "handler": function (response){
+        console.log('success')
+        var form = document.getElementById('myform')
+        // alert(response.razorpay_payment_id);
+        // alert(response.razorpay_order_id);
+        // alert(response.razorpay_signature)
+        window.location.href = `http://localhost:8000/paymentdone?order_id=${response.razorpay_order_id}&payment_id=${response.razorpay_payment_id}&cust_id=${form.elements['custid'].value}`
+    },
+    "prefill": {
+        "name": "Gaurav Kumar",
+        "email": "gaurav.kumar@example.com",
+        "contact": "9000090000"
+    },
+    "notes": {
+        "address": "Razorpay Corporate Office"
+    },
+    "theme": {
+        "color": "#3399cc"
+    }
+};
+var rzp1 = new Razorpay(options);
+rzp1.on('payment.failed', function (response){
+        alert(response.error.description);
+});
+document.getElementById('rzp-button1').onclick = function(e){
+    rzp1.open();
+    e.preventDefault();
+}
+</script>
+{% endblock payment-gateway %}
